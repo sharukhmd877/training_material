@@ -1,0 +1,97 @@
+#Ansible
+
+Created 4 EC2 named - Ansible host, app1 , app2 , load balancer
+login to our host
+install ansible -- https://www.ansiblepilot.com/articles/how-to-install-ansible-in-amazon-linux-2/
+mkdir ansible
+cd ansible
+vim hosts-dev
+vim ansible.cfg
+vim key.pem (copy the your key which is used to create instances)
+chmod 400 key.pem
+ansible -m ping all
+
+ansible --list-hosts all
+ansible --list-hosts webservers
+ansible --list-hosts loadbalancer
+
+
+ansible -m shell -a "uname" all
+
+#still in the ansible directory
+mkdir playbooks
+cd playbooks
+vim yum-update.yml
+cd ..
+ansible-playbook playbooks/yum-update.yml
+
+vim playbooks/install-services.yml  (in anisble directory)
+ansible-playbook playbooks/install-services.yml
+
+you can check it by accessing ip address
+
+
+#still in my ansible directory
+vim index.php
+vim playbooks/setup-app.yml
+ansible-playbook playbooks/setup-app.yml
+
+you can check it by accessing ip address
+
+
+#created a load balancer
+
+mkdir config
+vim config/lb-config.j2
+vim playbooks/setup-lb.yml
+ansible-playbook playbooks/setup-lb.yml
+
+accesss lb ip_address and do some refresh,
+go to ip_address/balancer-manager
+
+#all-playbook to execute all playbooks at once
+
+vim playbooks/all-playbook.yml
+ansible-playbook playbooks/all-playbook.yml
+
+#ansible variables
+
+update setup-app.yml
+
+ansible-playbook playbooks/setup-app.yml
+
+#ansible -m setup all (system configuration)
+
+#anisble info.php
+
+update setup-app.yml
+
+ansible-playbook playbooks/setup-app.yml
+
+check it by ip_address/info.php
+
+#ansible tags
+
+update setup-app.yml using tags
+
+ansible-playbook playbooks/setup-app.yml --tags upload
+
+#ansible check mode
+
+ansible-playbook playbooks/all-playbook.yml --check
+
+#ansible-vault
+
+mkdir vars
+ansible-vault create vars/secret-variable.yml (give password to secret-variable.yml)
+		--> secret_password: "password"
+
+cat vars/secret-variable.yml (encrypted msg)
+
+ansible-vault edit vars/secret-variable.yml (put password of secret-variable.yml)
+
+
+#update setup-app.yml with vault password
+
+ansible-playbook playbooks/setup-app.yml --ask-vault-pass
+    (put the passowrd which is inside secret-variable.yml)

@@ -1,0 +1,14 @@
+#Terraform workspace
+
+terraform workspace new WORKSPACE_NAME
+terraform workspace select WORKSPACE_NAME
+terraform workspace list
+
+terraform init
+terraform apply --var-file=nonprod.tfvars --auto-approve (my resources will be deployed in the new workspace)
+
+#To reflect the changes chnage ec2 name
+terraform workspace select default
+terraform apply --var-file=nonprod.tfvars --auto-approve (my resources will be deployed in defaultworkspace)
+
+you can the this on ec2 console (6 instance)

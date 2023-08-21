@@ -1,0 +1,98 @@
+#Terraform ec2 
+
+created ec2
+assigned the admin role to ec2 
+login vm 
+install terraform 
+mkdir aws
+cd aws
+vim s3.tf
+vim provider.tf
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+#Terraform using Windows
+
+folder in local system
+created s3.tf
+created provider.tf
+
+open terminal 
+created iam user and it's access key
+	$Env:AWS_ACCESS_KEY_ID="________"
+	$Env:AWS_SECRET_ACCESS_KEY="________"
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+
+git init
+git status
+git add .
+git commit -m "commit 1"
+
+created variable.tf
+created nonprod.tfvars
+
+terraform fmt
+terraform validate
+terraform plan --var-file=nonprod.tfvars 
+terraform apply --var-file=nonprod.tfvars --auto-approve
+
+created ec2.tf 
+updated variable.tf
+updated nonprod.tfvars
+
+terraform fmt
+terraform validate
+terraform plan --var-file=nonprod.tfvars 
+terraform apply --var-file=nonprod.tfvars --auto-approve
+
+created alb.tf
+update ec2.tf
+update variable.tf
+update nonprod.tf
+
+terraform fmt
+terraform validate
+terraform plan --var-file=nonprod.tfvars 
+terraform apply --var-file=nonprod.tfvars --auto-approve
+
+#Remote tf state
+
+created s3 bucket
+update provider.tf with
+		terraform {
+  backend "s3" {
+    bucket = "BUCKET_NAME" # Replace this with the S3 bucket name you created
+    key    = "terraform.tfstate"
+    region = "us-east-1" # Replace this with your desired AWS region
+  }
+}
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan --var-file=nonprod.tfvars 
+terraform apply --var-file=nonprod.tfvars --auto-approve
+
+#Workspace
+
+create prod.tfvars
+terraform workspace list
+terraform workspace new prod
+terraform init
+terraform fmt
+terraform validate
+terraform plan --var-file=prod.tfvars 
+terraform apply --var-file=prod.tfvars --auto-approve
+
+now you can see new resources has been created
+
+terraform workspace select WORKSPACE_NAME
+

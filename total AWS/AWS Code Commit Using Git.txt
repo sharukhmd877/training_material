@@ -1,0 +1,18 @@
+AWS CODECOMMIT SERVICE USING GIT
+
+we created repo in aws codecommit
+we created iam with security credentials (HTTPS git credentials)
+we created folder locally in system 
+open terminal by right click
+went code commit copy the clone https url
+back to terminal and ---> git clone CODE_COMMIT_URL
+						git credentials ---> username and password ( of (HTTPS git credentials))
+New folder has been created inside your folder with same name of your code commit repo
+in codecommit folder in local system do right click to open terminal
+and created a file.
+in terminal -->> git status
+				git add .
+				git commit -m "initial commit"
+				git push
+				
+Go back to codecommit repo refresh your page.

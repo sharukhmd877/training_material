@@ -1,0 +1,373 @@
+# hosts-dev/inventory
+
+[webservers]
+app1 ansible_host=<PRIVATE_IP_ADDRESS>
+app2 ansible_host=<PRIVATE_IP_ADDRESS>
+
+[loadbalancers]
+lb1 ansible_host=<PRIVATE_IP_ADDRESS>
+
+[local]
+control ansible_connection=local
+
+
+# ansible.cfg
+
+[defaults]
+inventory = ./hosts-dev
+remote_user = ec2-user
+private_key_file = ./key.pem
+host_key_checking = False
+
+
+# yum-update.yml
+
+---
+  - hosts: webservers:loadbalancers
+    become: true
+    tasks:
+      - name: Update yum packages
+        yum: name=* state=latest
+	  
+# install-services.yml
+
+---
+  - hosts: loadbalancers
+    become: true
+    tasks:
+      - name: Installing apache
+        yum: name=httpd state=present
+      - name: Ensure apache starts
+        service: name=httpd state=started enabled=yes
+
+  - hosts: webservers
+    become: true
+    tasks:
+      - name: Installing services
+        yum:
+          name: 
+            - httpd
+            - php
+          state: present
+      - name: Ensure apache starts
+        service: name=httpd state=started enabled=yes
+		
+#index.php
+
+<?
+echo "<h1>Hello, World! This is my Ansible page.</h1>";
+?>
+
+# setup-app.yml
+
+---
+  - hosts: webservers
+    become: true
+    tasks:
+      - name: Upload application file
+        copy:
+          src: ../index.php
+          dest: /var/www/html
+          mode: 0755
+      
+      - name: Configure php.ini file
+        lineinfile:
+          path: /etc/php.ini
+          regexp: ^short_open_tag
+          line: 'short_open_tag=On'
+
+      - name: restart apache
+        service: name=httpd state=restarted
+
+# setup-lb.yml
+
+--- 
+  - hosts: loadbalancers
+    become: true 
+    tasks:
+      - name: Creating template
+        template:
+          src: ../config/lb-config.j2
+          dest: /etc/httpd/conf.d/lb.conf
+          owner: bin
+          group: wheel
+          mode: 064
+        notify: restart apache
+
+    handlers:
+      - name: restart apache
+        service: name=httpd state=restarted
+		
+		
+		
+#lb-config.j2	
+	
+ProxyRequests off
+<Proxy balancer://webcluster >
+  {% for hosts in groups['webservers'] %}
+    BalancerMember http://{{hostvars[hosts]['ansible_host']}}
+  {% endfor %}
+    ProxySet lbmethod=byrequests
+</Proxy>
+
+# Optional
+<Location /balancer-manager>
+  SetHandler balancer-manager
+</Location>
+
+ProxyPass /balancer-manager !
+ProxyPass / balancer://webcluster/
+
+
+#using handlers-->
+
+# setup-app.yml
+
+---
+  - hosts: webservers
+    become: true
+    tasks:
+      - name: Upload application file
+        copy:
+          src: ../index.php
+          dest: /var/www/html
+          mode: 0755
+
+      - name: Configure php.ini file
+        lineinfile:
+          path: /etc/php.ini
+          regexp: ^short_open_tag
+          line: 'short_open_tag=On'
+        notify: restart apache
+
+    handlers:
+      - name: restart apache
+        service: name=httpd state=restarted
+
+
+
+#all-playbook.yml
+
+---
+- import_playbook: yum-update.yml
+- import_playbook: install-services.yml
+- import_playbook: setup-app.yml
+- import_playbook: setup-lb.yml
+
+
+
+#ansible variables -->
+
+#setup-app.yml
+
+---
+- hosts: webservers
+  become: true
+
+  vars:
+    src_index_php: ../index.php
+    dest_html: /var/www/html
+    php_ini_path: /etc/php.ini
+    short_open_tag_setting: 'On'
+    httpd_service_name: httpd
+
+  tasks:
+    - name: Upload application file
+      copy:
+        src: "{{ src_index_php }}"
+        dest: "{{ dest_html }}"
+        mode: 0755
+
+    - name: Configure php.ini file
+      lineinfile:
+        path: "{{ php_ini_path }}"
+        regexp: "^short_open_tag"
+        line: "short_open_tag={{ short_open_tag_setting }}"
+      notify: restart apache
+
+  handlers:
+    - name: restart apache
+      service:
+        name: "{{ httpd_service_name }}"
+        state: restarted
+		
+		
+		
+#new changes in setup-app.yml
+
+
+---
+- hosts: webservers
+  become: true
+
+  vars:
+    src_index_php: ../index.php
+    dest_html: /var/www/html
+    php_ini_path: /etc/php.ini
+    short_open_tag_setting: 'On'
+    httpd_service_name: httpd
+
+  tasks:
+    - name: Upload application file
+      copy:
+        src: "{{ src_index_php }}"
+        dest: "{{ dest_html }}"
+        mode: 0755
+
+    - name: Configure php.ini file
+      lineinfile:
+        path: "{{ php_ini_path }}"
+        regexp: "^short_open_tag"
+        line: "short_open_tag={{ short_open_tag_setting }}"
+      notify: restart apache
+
+    - name: Create info.php file
+      copy:
+        dest: "{{ dest_html }}/info.php"
+        content: "<h1> Info about our webserver {{ ansible_hostname }} </h1>"
+        mode: 0644
+
+    - name: See directory content
+      command: ls -la "{{ dest_html }}"
+      register: dir_content
+
+  handlers:
+    - name: restart apache
+      service:
+        name: "{{ httpd_service_name }}"
+        state: restarted
+
+
+                OR
+				
+				
+# setup-app.yml
+
+---
+  - hosts: webservers
+    become: true
+
+    vars:
+      path_to_app: "/var/www/html"
+
+    tasks:
+      - name: Upload application file
+        copy:
+          src: ../index.php
+          dest: "{{ path_to_app }}"
+          mode: 0755
+
+      - name: Create simple info page
+        copy:
+          dest: "{{ path_to_app }}/info.php"
+          content: "Info about our webserver {{ ansible_hostname }}"
+
+      - name: See directory contents
+        command: ls -la {{ path_to_app }}
+        register: dir_contents
+
+      - name: Debug directory contents
+        debug:
+          msg: "{{ dir_contents }}"
+
+      - name: Configure php.ini file
+        lineinfile:
+          path: /etc/php.ini
+          regexp: ^short_open_tag
+          line: 'short_open_tag=On'
+        notify: restart apache
+
+    handlers:
+      - name: restart apache
+        service: name=httpd state=restarted
+		
+		
+		
+		
+#setup-app.yml with tags
+
+# setup-app.yml
+
+---
+  - hosts: webservers
+    become: true
+
+    vars:
+      path_to_app: "/var/www/html"
+
+    tasks:
+      - name: Upload application file
+        copy:
+          src: ../index.php
+          dest: "{{ path_to_app }}"
+          mode: 0755
+        tags: upload
+
+      - name: Create simple info page
+        copy:
+          dest: "{{ path_to_app }}/info.php"
+          content: "Info about our webserver {{ ansible_hostname }}"
+        tags: create
+
+      - name: See directory contents
+        command: ls -la {{ path_to_app }}
+        register: dir_contents
+
+      - name: Debug directory contents
+        debug:
+          msg: "{{ dir_contents }}"
+
+      - name: Configure php.ini file
+        lineinfile:
+          path: /etc/php.ini
+          regexp: ^short_open_tag
+          line: 'short_open_tag=On'
+        notify: restart apache
+
+    handlers:
+      - name: restart apache
+        service: name=httpd state=restarted
+		
+		
+#ansible vault -->
+
+# setup-app.yml
+
+---
+  - hosts: webservers
+    become: true
+
+    vars:
+      path_to_app: "/var/www/html"
+
+    vars_files:
+      - ../vars/secret-variable.yml # vault password is 'password'
+
+    tasks:
+      - name: Use secret password here
+        debug:
+          msg: "{{ secret_password }}"
+
+      - name: Upload application file
+        copy:
+          src: ../index.php
+          dest: "{{ path_to_app }}"
+          mode: 0755
+        tags: upload
+
+      - name: Create simple info page
+        copy:
+          dest: "{{ path_to_app }}/info.php"
+          content: "Info about our webserver {{ ansible_hostname }}. These are changes."
+        tags: create
+
+      - name: Configure php.ini file
+        lineinfile:
+          path: /etc/php.ini
+          regexp: ^short_open_tag
+          line: 'short_open_tag=On'
+        notify: restart apache
+
+    handlers:
+      - name: restart apache
+        service: name=httpd state=restarted

@@ -1,0 +1,12 @@
+AWS Lambda is a serverless computing platform that allows you to run code without the headache of managing servers, Managing your own servers is a challenging test, hence AWS Lambda comes handy here. You can create a Lambda function by specifying the runtime, the code to execute, and the trigger that invokes the function. 
+
+Creating a Lambda function in AWS: 
+
+1. Navigate to the Lambda dashboard in the AWS Management Console.
+2. Click the "Create function" button. 
+3. Select the runtime that your code is written in (e.g. Node.js, Python, Java). 4. Enter a name and description for your function. 
+5. Choose the type of trigger for your function (e.g. API Gateway, S3, DynamoDB, etc.). 
+6. Upload your code to the Lambda function or specify the location of your code (e.g. S3 bucket).
+7. Configure the function's execution role and any additional settings as needed. 8. Click "Create function" to create the Lambda function. 
+
+Your Lambda function should now be created and ready to use. You can view and manage your function in the Lambda dashboard, and modify its settings as needed. 

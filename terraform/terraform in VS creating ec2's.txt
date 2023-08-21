@@ -1,0 +1,135 @@
+#create ec2 instance using terraform
+
+created ec2.tf --->
+
+data "aws_ami" "amzn2" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+
+  filter {
+    name   = "owner-alias"
+    values = ["amazon"]
+  }
+}
+
+resource "aws_instance" "example_instance" {
+  ami           = data.aws_ami.amzn2.id
+  instance_type = var.instance_type
+  key_name      = var.keypair
+  tags          = var.tags
+}
+
+update variables.tf -->
+
+variable "bucket_name" {
+  type        = string
+  description = "This variable is to define the bucket name"
+}
+
+variable "tags" {
+  description = "Tags to apply on resource"
+  type        = map(any)
+  default = {
+    Owner = "UTKARSH"
+    ENV   = "nonprod"
+  }
+}
+
+variable "instance_type" {
+  type        = string
+  description = "This variables is to define the instance type"
+}
+
+variable "keypair" {
+  type        = string
+  description = "This variables is to define the keypair"
+}
+
+update nonprod.tfvars --->
+
+bucket_name   = "terraform27072023"
+instance_type = "t2.micro"
+keypair       = "key"
+
+s3.tf , output.tf and provider.tf will be same
+
+terminal -->
+terraform fmt
+terraform validate
+terraform plan --var-file=nonprod.tfvars
+terraform apply --var-file=nonprod.tfvars --auto-approve
+
+cna see resources by going to ec2 console.
+
+terraform destroy --var-file=nonprod.tfvars --auto-approve
+
+#increasing VM
+update ec2.tf --->
+
+data "aws_ami" "amzn2" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+
+  filter {
+    name   = "owner-alias"
+    values = ["amazon"]
+  }
+}
+
+resource "aws_instance" "example_instance" {
+  count         = 3
+  ami           = data.aws_ami.amzn2.id
+  instance_type = var.instance_type
+  key_name      = var.keypair
+  tags = {
+    Name = "TerraformHost-${count.index + 1}"
+  }
+}
+
+
+#update the ec2.tf for userdate (startup script) --->
+
+data "aws_ami" "amzn2" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+
+  filter {
+    name   = "owner-alias"
+    values = ["amazon"]
+  }
+}
+
+resource "aws_instance" "example_instance" {
+  count         = 4
+  ami           = data.aws_ami.amzn2.id
+  instance_type = var.instance_type
+  key_name      = var.keypair
+  tags = {
+    Name = "TerraformHost-${count.index + 1}"
+  }
+
+   user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              yum install -y docker
+              systemctl start docker
+              systemctl enable docker
+              EOF
+}
+
+

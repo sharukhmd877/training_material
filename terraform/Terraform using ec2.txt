@@ -1,0 +1,31 @@
+TERRAFORM 
+
+we created ec2 instance
+created iam role with admin permission
+login to ec2 instance
+sudo su
+install terraform --- https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
+mkidir aws 
+cd aws 
+ls
+vim s3.tf -->
+	resource "aws_s3_bucket" "nonprod" {
+		bucket = "terraformBucket_____"
+	}
+	
+vim provider.tf --->
+	provider "aws" {
+		region = "us-east-1"
+	}
+	
+ls
+ls -la
+terraform init
+ls -la
+terraform fmt
+cat s3.tf
+terraform validate
+terraform plan
+terraform apply
+
+terraform destroy

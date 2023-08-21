@@ -1,0 +1,99 @@
+created folder in VS
+created iam user with acccess key --- 
+	$Env:AWS_ACCESS_KEY_ID="________"
+	$Env:AWS_SECRET_ACCESS_KEY="________"
+we used this access key in terminal to estb. communication with aws
+
+created s3.tf
+   resource "aws_s3_bucket" "bucket" {
+		bucket = terraform26072023"
+	}
+created	provider.tf
+   provider "aws" {
+		region = "us-east-1"
+	}
+terraform -version
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+#after creation of resources we did some changes in s3.tf
+s3.tf 
+	 resource "aws_s3_bucket" "bucket" {
+		bucket = terraform26072023"
+		tags = { 
+		 Owner = "________"
+		 }
+	}
+	
+save it
+
+terraform fmt
+terraform validate
+terminal apply --auto-approve
+
+can check it on aws console
+
+#version control
+git init
+git status
+created .gitignore 
+	*.tfstate.*
+	*.tfstate
+	.terraform.*
+	.terraform/*
+git status
+git add .
+git commit -m "Initial commit"
+
+
+#variables.tf
+created variables.tf ==>
+       
+variable "bucket_name" {
+  type        = string
+  description = "This variable is to define the bucket name"
+}
+
+variable "tags" {
+  description = "Tags to apply on resource"
+  type        = map(any)
+  default = {
+    Owner = "UTKARSH"
+    ENV   = "nonprod"
+  }
+}
+
+changes in s3.tf ==>
+
+resource "aws_s3_bucket" "bucket" {
+  bucket = var.bucket_name
+  tags   = var.tags
+}
+
+created nonprod.tfvars ==>
+
+bucket_name = "________" (bucket name should be unique)
+
+terminal-->
+terraform fmt
+terraform validate
+terraform plan --var-file=nonprod.tfvars
+terraform apply --var-file=nonprod.tfvars --auto-approve
+
+can see the changes in s3 console
+
+#output.tf
+create output.tf ===>
+
+output "s3_bucket_arn" {
+  value = aws_s3_bucket.bucket.arn
+}
+
+terraform fmt
+terraform validate
+terraform apply --var-file=nonprod.tfvars --auto-approve
+
+(you will se output generated in terminal)
